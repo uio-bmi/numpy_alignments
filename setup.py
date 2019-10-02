@@ -9,7 +9,7 @@ setup(name='numpy_alignments',
       license='MIT',
       packages=['numpy_alignments'],
       zip_safe=False,
-      install_requires=['numpy'],
+      install_requires=['numpy', 'tqdm'],
       classifiers=[
             'Programming Language :: Python :: 3'
       ],
