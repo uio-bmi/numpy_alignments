@@ -11,6 +11,17 @@ class Comparer:
         self.compare_alignments = compare_alignments
         self.type = type
 
+    def get_correct_rates(self):
+        for name, alignments in self.compare_alignments.items():
+            logging.info("Setting corectness for %s" % name)
+            alignments.set_correctness(self.truth_alignments)
+
+        rates = {}
+        for name, alignments in self.compare_alignments.items():
+            logging.info("Processing %s" % name)
+            rates[name] = np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
+
+        return rates
 
     def create_roc_plots(self, save_to_file=None):
         mapq_intervals = [60, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 46, 44, 42, 40, 37, 34, 31, 27, 25, 23, 20, 17, 14, 11, 7, 5, 3, 2, 1, 0]

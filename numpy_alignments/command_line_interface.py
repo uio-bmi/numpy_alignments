@@ -34,7 +34,7 @@ def compare_alignments(args):
         comparer = Comparer(truth_alignments, compare_alignments, type=type)
         comparer.create_roc_plots(save_to_file=args.save_to_file + "_" + type + ".png")
 
-    comparer.get_wrong_alignments_correct_by_other("two_step_approach", "vg_chr20")
+    #comparer.get_wrong_alignments_correct_by_other("two_step_approach", "vg_chr20")
     #comparer.get_wrong_alignments_correct_by_other("bwa_10m_tuned", "vg_10m")
 
 
