@@ -24,6 +24,18 @@ def store_alignments(args):
     a.to_file(args.file_name)
 
 
+def get_correct_rates(args):
+    logging.info("Reading alignments from file")
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+    compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
+
+    logging.info("Comparing")
+    comparer = Comparer(truth_alignments, compare_alignments)
+    rates = comparer.get_correct_rates()
+    for name, rate in rates.items():
+        print(name, rate)
+
+
 def compare_alignments(args):
     logging.info("Reading alignments from file")
     truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
@@ -60,6 +72,12 @@ def run_argument_parser(args):
     compare.add_argument("compare_alignments", help="Comma-separated list of files to compare")
     compare.add_argument("-f", "--save-to-file", help="File name to save figure to (jpg)")
     compare.set_defaults(func=compare_alignments)
+
+    # Compare (get correct rates)
+    compare = subparsers.add_parser("get_correct_rates")
+    compare.add_argument("truth_alignments")
+    compare.add_argument("compare_alignments", help="Comma-separated list of files to compare")
+    compare.set_defaults(func=get_correct_rates)
 
     if len(args) == 0:
         parser.print_help()
