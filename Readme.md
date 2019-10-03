@@ -32,4 +32,17 @@ numpy_alignments get_correct_rates truth bwa
 Create ROC-plots:
 ```bash
 numpy_alignments compare -f figure.png truth bwa
+
+```
+
+### Use as python library
+```python
+from numpy_alignments.comparer import Comparer
+from numpy_alignments import NumpyAlignments
+bwa = NumpyAlignments.from_file("bwa.npz")
+truth = NumpyAlignments.from_file("truth.npz")
+comparer = Comparer(truth, {"bwa": bwa})
+rate = comparer.get_correct_rates()
+print(rate)
+
 ```

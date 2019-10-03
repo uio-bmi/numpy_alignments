@@ -31,6 +31,7 @@ class NumpyAlignments:
         chromosome_match = set(np.where(self.chromosomes == truth_alignments.chromosomes)[0])
         position_match = set(np.where(np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch)[0])
         match = np.array(list(chromosome_match.intersection(position_match)))
+        logging.info("Number of matches: %d" % len(match))
         self.is_correct[match] = 1
         print("N correct: %d" % len(match))
         #self.is_correct[np.where((self.chromosomes == truth_alignments.chromosomes) &
