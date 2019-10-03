@@ -15,5 +15,21 @@ represent the reads in numppy arrays of the given size. The following examples a
 Map reads with BWA-MEM and pipe directly to numpy alignments to avoid storing large BAM-files on disk:
 
 ```python
-bwa mem ref.fa reads.fa | numpy_alignments store sam some_name 100
+bwa mem ref.fa reads.fa | numpy_alignments store sam bwa 100
+```
+
+Save truth positions:
+```bash
+cat positions.tsv | numpy_alignments store truth truth 265154
+```
+
+Compare bwa to truth:
+```bash
+numpy_alignments get_correct_rates truth bwa
+```
+
+
+Create ROC-plots:
+```bash
+numpy_alignments compare -f figure.png truth bwa
 ```
