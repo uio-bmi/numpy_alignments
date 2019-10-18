@@ -43,8 +43,8 @@ def compare_alignments(args):
 
     logging.info("Comparing")
     for type in ["all", "variants", "nonvariants"]:
-        comparer = Comparer(truth_alignments, compare_alignments, type=type)
-        comparer.create_roc_plots(save_to_file=args.save_to_file + "_" + type + ".png")
+        comparer = Comparer(truth_alignments, compare_alignments, type=type, allowed_mismatch=args.allowed_mismatch)
+        comparer.create_roc_plots(save_to_file=args.save_to_file + "_" + type + ".png", limit_comparison=args.limit_to_n_reads)
 
     #comparer.get_wrong_alignments_correct_by_other("two_step_approach", "vg_chr20")
     #comparer.get_wrong_alignments_correct_by_other("bwa_10m_tuned", "vg_10m")
@@ -71,6 +71,8 @@ def run_argument_parser(args):
     compare.add_argument("truth_alignments")
     compare.add_argument("compare_alignments", help="Comma-separated list of files to compare")
     compare.add_argument("-f", "--save-to-file", help="File name to save figure to (jpg)")
+    compare.add_argument("-m", "--allowed-mismatch", help="Maximum number of bp between read position and correct position in order for read to considered as correctly mapped.", type=int, default=150)
+    compare.add_argument("-l", "--limit-to-n-reads", help="Limit comparison to max this number of reads in order to make things faster", required=False, type=int, default=None)
     compare.set_defaults(func=compare_alignments)
 
     # Compare (get correct rates)

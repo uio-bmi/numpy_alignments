@@ -13,6 +13,7 @@ class NumpyAlignments:
         self.mapqs = mapqs
         self.n_variants = n_variants
         self.is_correct = None  # indexes of correct alignments
+        self._correctness_is_set = False
 
 
     def __getitem__(self, item):
@@ -25,15 +26,24 @@ class NumpyAlignments:
         }
         return data
 
-    def set_correctness(self, truth_alignments, allowed_mismatch=1000):
+    def set_correctness(self, truth_alignments, allowed_mismatch=150):
+        if self._correctness_is_set:
+            logging.info("Not setting correctness. Is set before")
+            return
+
+        logging.info("Allowing %d base pairs mismatch" % allowed_mismatch)
         # Sets which alignments are correctly align by checking against another alignment set
         self.is_correct = np.zeros(len(self.chromosomes), dtype=np.uint8)
-        chromosome_match = set(np.where(self.chromosomes == truth_alignments.chromosomes)[0])
-        position_match = set(np.where(np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch)[0])
-        match = np.array(list(chromosome_match.intersection(position_match)))
+        #chromosome_match = set(np.where(self.chromosomes == truth_alignments.chromosomes)[0])
+        #position_match = set(np.where(np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch)[0])
+        #match = np.array(list(chromosome_match.intersection(position_match)))
+
+        match = np.where((self.chromosomes == truth_alignments.chromosomes) & (np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch))[0]
+
         logging.info("Number of matches: %d" % len(match))
         self.is_correct[match] = 1
         print("N correct: %d" % len(match))
+        self._correctness_is_set = True
         #self.is_correct[np.where((self.chromosomes == truth_alignments.chromosomes) &
         # (np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch))[0]] = 1
 
@@ -83,10 +93,14 @@ class NumpyAlignments:
 
             position = int(l[3])
 
-            chromosomes[identifier] = chromosome
-            positions[identifier] = position
-            scores[identifier] = score
-            mapqs[identifier] = int(l[4])
+            try:
+                chromosomes[identifier] = chromosome
+                positions[identifier] = position
+                scores[identifier] = score
+                mapqs[identifier] = int(l[4])
+            except IndexError:
+                logging.error("Got indexerror when parsing line. Skipping")
+                logging.error(line)
 
         logging.info("Done getting alignments")
         return cls(chromosomes, positions, n_variants, scores, mapqs)

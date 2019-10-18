@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 
 
 class Comparer:
-    def __init__(self, truth_alignments, compare_alignments, type='all'):
+    def __init__(self, truth_alignments, compare_alignments, type='all', allowed_mismatch=150):
         self.truth_alignments = truth_alignments
         self.compare_alignments = compare_alignments
         self.type = type
+        self.allowed_mismatch = allowed_mismatch
 
     def get_correct_rates(self):
         for name, alignments in self.compare_alignments.items():
             logging.info("Setting corectness for %s" % name)
-            alignments.set_correctness(self.truth_alignments)
+            alignments.set_correctness(self.truth_alignments, self.allowed_mismatch)
 
         rates = {}
         for name, alignments in self.compare_alignments.items():
@@ -23,7 +24,7 @@ class Comparer:
 
         return rates
 
-    def create_roc_plots(self, save_to_file=None):
+    def create_roc_plots(self, save_to_file=None, limit_comparison=None):
         mapq_intervals = [60, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 46, 44, 42, 40, 37, 34, 31, 27, 25, 23, 20, 17, 14, 11, 7, 5, 3, 2, 1, 0]
 
         for name, alignments in self.compare_alignments.items():
@@ -62,6 +63,10 @@ class Comparer:
                     selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (self.truth_alignments.n_variants > 0))[0]
                 elif self.type == "nonvariants":
                     selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (self.truth_alignments.n_variants == 0))[0]
+
+                if limit_comparison is not None:
+                    selection = selection[0:limit_comparison]
+                    logging.warning("Limiting comparison to max %d reads" % limit_comparison)
 
                 print("N with mapq >= %d and < %d: %d" % (lower_limit, upper_limit, len(selection)))
 
