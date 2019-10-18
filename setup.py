@@ -9,7 +9,7 @@ setup(name='numpy_alignments',
       license='MIT',
       packages=['numpy_alignments'],
       zip_safe=False,
-      install_requires=['numpy', 'tqdm'],
+      install_requires=['numpy', 'tqdm', 'matplotlib==3.0.0', 'plotly'],
       classifiers=[
             'Programming Language :: Python :: 3'
       ],
