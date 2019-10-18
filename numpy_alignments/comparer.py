@@ -3,14 +3,24 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly
+
 
 
 class Comparer:
-    def __init__(self, truth_alignments, compare_alignments, type='all', allowed_mismatch=150):
+    def __init__(self, truth_alignments, compare_alignments, colors=None, type='all', allowed_mismatch=150):
         self.truth_alignments = truth_alignments
         self.compare_alignments = compare_alignments
         self.type = type
+        self.mapq_intervals = [60, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 46, 44, 42, 40, 37, 34, 30, 27, 25, 23, 20, 17, 14, 10, 6, 3, 2, 1, 0]
         self.allowed_mismatch = allowed_mismatch
+
+        default_colors = ["blue", "red", "green", "purple", "orange", "black"]
+        if colors is None:
+            colors = {c: default_colors[i] for i, c in enumerate(self.compare_alignments.keys())}
+
+        self.colors = colors
 
     def get_correct_rates(self):
         for name, alignments in self.compare_alignments.items():
@@ -25,7 +35,7 @@ class Comparer:
         return rates
 
     def create_roc_plots(self, save_to_file=None, limit_comparison=None):
-        mapq_intervals = [60, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 46, 44, 42, 40, 37, 34, 31, 27, 25, 23, 20, 17, 14, 11, 7, 5, 3, 2, 1, 0]
+        mapq_intervals = self.mapq_intervals
 
         for name, alignments in self.compare_alignments.items():
             logging.info("Setting corectness for %s" % name)
@@ -34,6 +44,7 @@ class Comparer:
 
         recalls = {name: [] for name in self.compare_alignments.keys()}
         precision = {name: [] for name in self.compare_alignments.keys()}
+        n_reads = {name: [] for name in self.compare_alignments.keys()}
 
         for name, alignments in self.compare_alignments.items():
             logging.info("Processing %s" % name)
@@ -52,7 +63,7 @@ class Comparer:
 
             prev_interval = 100
             for mapq in mapq_intervals:
-                logging.info("mapq: %d" % mapq)
+                #logging.info("mapq: %d" % mapq)
                 upper_limit = prev_interval
                 lower_limit = mapq
 
@@ -68,7 +79,7 @@ class Comparer:
                     selection = selection[0:limit_comparison]
                     logging.warning("Limiting comparison to max %d reads" % limit_comparison)
 
-                print("N with mapq >= %d and < %d: %d" % (lower_limit, upper_limit, len(selection)))
+                #print("N with mapq >= %d and < %d: %d" % (lower_limit, upper_limit, len(selection)))
 
                 # Find number of recalled and number of wrong here
                 n_correct = np.sum(alignments.is_correct[selection])
@@ -78,24 +89,65 @@ class Comparer:
                 n_wrong_total += n_wrong
 
                 recalls[name].append(recalled_total / total)
-                precision[name].append(n_wrong_total / total)
+                precision[name].append((n_wrong_total + 1) / total)
+                n_reads[name].append(np.log(1 + len(selection)))
+
 
                 prev_interval = mapq
 
-        plt.figure()
+        fig = go.Figure(
+            layout=go.Layout(
+                xaxis=dict(showgrid=True, zeroline=True),
+            )
+        )
+        #fig.update_layout(title_text="Reads (%s)" % self.type)
+        fig.update_layout(xaxis_type="log")
+        fig.update_layout(
+            xaxis = dict(
+                showexponent = 'all',
+                exponentformat = 'e',
+                nticks=5,
+                tickfont=dict(
+                    size=16
+                )
+        ))
+        fig.update_layout(
+            yaxis = dict(
+                tickfont=dict(
+                    size=16
+                )
+            )
+        )
+        fig.update_layout(showlegend=False)
+
+
+
         for name in self.compare_alignments.keys():
-            plt.plot(precision[name], recalls[name], label=name)
-            plt.xscale("log")
-            plt.legend()
+            sizes = np.array(n_reads[name])
+            fig.add_trace(go.Scatter(x=precision[name], y=recalls[name],
+                                     text=[m if m % 10 == 0 else None for m in self.mapq_intervals],
+                                     mode='markers+lines+text',
+                                     textposition="top left",
+                                     name=name,
+                                     textfont=dict(
+                                        size=16
+                                     ),
+                                     marker=dict(
+                                         sizemode='area',
+                                         sizeref=4. * max(sizes) / (40. ** 2),
+                                         sizemin=7,
+                                         color=self.colors[name]
+                                         )
+                                     ),
+                          )
 
         if save_to_file is not None:
-            plt.savefig(save_to_file)
+            #plt.savefig(save_to_file)
+            plotly.offline.plot(fig, filename=save_to_file, auto_open=False)
             logging.info("Saved plot to %s" % save_to_file)
         else:
-            plt.show()
+            fig.show()
 
-        print(recalls)
-        print(precision)
 
     def get_wrong_alignments_correct_by_other(self, wrong_by, correct_by):
         selection_correct = set(list(np.nonzero(self.compare_alignments[correct_by].is_correct)[0]))
@@ -104,5 +156,3 @@ class Comparer:
 
         selection = selection_correct.intersection(selection_wrong).intersection(selection_mapq)
 
-        print(selection)
-        print(len(selection))
