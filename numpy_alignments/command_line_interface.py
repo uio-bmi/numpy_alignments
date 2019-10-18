@@ -27,11 +27,12 @@ def make_html_report_wrapper(args):
 
     # Make
     truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+    ids = args.compare_alignments.split(",")
     compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
     names = args.names.split(",")
-    names = {name: names[i] for i, name in enumerate(compare_alignments.keys())}
+    names = {name: names[i] for i, name in ids}
     colors = args.colors.split(",")
-    colors = {name: colors[i] for i, name in enumerate(compare_alignments.keys())}
+    colors = {name: colors[i] for i, name in ids}
 
     if len(colors) != len(names) or len(names) != len(compare_alignments):
         logging.error("Not enough names/colors/alignments. Numbers do not match")
