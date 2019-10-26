@@ -83,9 +83,10 @@ class NumpyAlignments:
             try:
                 score = int(l[13].replace("AS:i:", ""))
             except ValueError:
-                logging.error("Could not parsed score from line. Skipping")
-                logging.error(line)
-                continue
+                score = 0
+                #logging.error("Could not parsed score from line. Skipping")
+                #logging.error(line)
+                #continue
             except IndexError:
                 logging.error("Could not parsed line. Skipping")
                 logging.error(line)
