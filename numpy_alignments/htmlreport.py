@@ -1,4 +1,5 @@
 import datetime
+from numpy.random import randint
 
 def make_report(directory, ids, names, colors):
     out = """
@@ -26,7 +27,7 @@ def make_report(directory, ids, names, colors):
 
     directory = "./"
     for title, image_postfix in images:
-        image_url = image_postfix + ".html"
+        image_url = image_postfix + ".html?r=" + str(randint(0,9999999999))
         width = 600
         if "novel" in image_postfix:
             width = 600
@@ -49,7 +50,7 @@ def make_report(directory, ids, names, colors):
     out += """
     <div style='margin-top: 100px; margin-left: 50px;'>
     <h2>All reads in separate plot</h2>
-    <iframe style='width: 600px; height: 600px; border: none; float: left;' src='all.html'></iframe>
+    <iframe style='width: 600px; height: 600px; border: none; float: left;' src='all.html?r=""" + str(randint(0, 9999999999)) + """'></iframe>
     <p style='margin-top: 100px;'>
     """
 
