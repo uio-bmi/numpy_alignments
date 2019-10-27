@@ -27,7 +27,7 @@ class NumpyAlignments:
         return data
 
     def set_correctness(self, truth_alignments, allowed_mismatch=150):
-        if self.is_correct is not None:
+        if self.is_correct is not None and len(self.is_correct) == len(self.positions):
             logging.info("Not setting correctness. Is set before")
             return
 
@@ -185,7 +185,7 @@ class NumpyAlignments:
                 scores=self.scores,
                 mapqs=self.mapqs,
                 n_variants=self.n_variants,
-                is_correct=self.is_correct)
+                is_correct=self.is_correct if self.is_correct is not None else np.array([]))
         logging.info("Saved to %s" % file_name)
 
     @classmethod
