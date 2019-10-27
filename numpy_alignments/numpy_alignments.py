@@ -12,7 +12,7 @@ class NumpyAlignments:
         self.scores = scores
         self.mapqs = mapqs
         self.n_variants = n_variants
-        self.is_correct = None  # indexes of correct alignments
+        self.is_correct = is_correct # indexes of correct alignments
 
 
     def __getitem__(self, item):

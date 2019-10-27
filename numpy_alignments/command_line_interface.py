@@ -12,10 +12,13 @@ def main():
 
 
 def set_correctness(args):
+    logging.info("Reading alignments")
     truth = NumpyAlignments.from_file(args.truth_alignments + ".npz")
     alignments = NumpyAlignments.from_file(args.alignments + ".npz")
+    logging.info("Setting correctness")
     alignments.set_correctness(truth)
     alignments.to_file(args.alignments)
+    logging.info("Correctness was set and file written to same file again")
 
 
 def make_html_report_wrapper(args):
