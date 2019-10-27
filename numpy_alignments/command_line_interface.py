@@ -59,7 +59,7 @@ def make_html_report_wrapper(args):
         comparer = Comparer(truth_alignments, compare_alignments, colors, type=type)
         comparer.create_roc_plots(save_to_file=report_id + "/" + type + ".html")
 
-    html = make_report(report_id, compare_alignments.keys(), names, colors)
+    html = make_report(report_id, ids, names, colors)
     with open(report_id + "/report.html", "w") as f:
         f.write(html)
     logging.info("Final report written to %s/report.html" % report_id)
