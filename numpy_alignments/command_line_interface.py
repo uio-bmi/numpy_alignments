@@ -10,6 +10,14 @@ from .htmlreport import make_report
 def main():
     run_argument_parser(sys.argv[1:])
 
+
+def set_correctness(args):
+    truth = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+    alignments = NumpyAlignments.from_file(args.alignments + ".npz")
+    alignments.set_correctness(truth)
+    alignments.to_file(args.alignments)
+
+
 def make_html_report_wrapper(args):
     from time import time
     import os
@@ -131,6 +139,12 @@ def run_argument_parser(args):
     cmd.add_argument("colors", help="Comma-separated list of colors (must work with html)")
     cmd.add_argument("-f", "--report-id", required=False, default=None, help="Will be generated if not specified")
     cmd.set_defaults(func=make_html_report_wrapper)
+
+    # Set correctness
+    cmd = subparsers.add_parser("set_correctness")
+    cmd.add_argument("truth_alignments")
+    cmd.add_argument("alignments")
+    cmd.set_defaults(func=set_correctness)
 
     if len(args) == 0:
         parser.print_help()

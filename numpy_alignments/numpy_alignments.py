@@ -6,14 +6,13 @@ from tqdm import tqdm
 
 
 class NumpyAlignments:
-    def __init__(self, chromosomes, positions, n_variants, scores, mapqs):
+    def __init__(self, chromosomes, positions, n_variants, scores, mapqs, is_correct=None):
         self.chromosomes = chromosomes
         self.positions = positions
         self.scores = scores
         self.mapqs = mapqs
         self.n_variants = n_variants
         self.is_correct = None  # indexes of correct alignments
-        self._correctness_is_set = False
 
 
     def __getitem__(self, item):
@@ -23,11 +22,12 @@ class NumpyAlignments:
             "score": self.scores[item],
             "mapq": self.mapqs[item],
             "n_variants": self.n_variants[item],
+            "is_correct": self.is_correct[item] if self.is_correct is not None else None,
         }
         return data
 
     def set_correctness(self, truth_alignments, allowed_mismatch=150):
-        if self._correctness_is_set:
+        if self.is_correct is not None:
             logging.info("Not setting correctness. Is set before")
             return
 
@@ -42,8 +42,7 @@ class NumpyAlignments:
 
         logging.info("Number of matches: %d" % len(match))
         self.is_correct[match] = 1
-        print("N correct: %d" % len(match))
-        self._correctness_is_set = True
+        logging.info("N correct: %d" % len(match))
         #self.is_correct[np.where((self.chromosomes == truth_alignments.chromosomes) &
         # (np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch))[0]] = 1
 
@@ -185,13 +184,18 @@ class NumpyAlignments:
                 positions=self.positions,
                 scores=self.scores,
                 mapqs=self.mapqs,
-                n_variants=self.n_variants)
+                n_variants=self.n_variants,
+                is_correct=self.is_correct)
         logging.info("Saved to %s" % file_name)
 
     @classmethod
     def from_file(cls, file_name):
         data = np.load(file_name)
-        return cls(data["chromosomes"], data["positions"].astype(np.int32), data["n_variants"], data["scores"], data["mapqs"])
+        is_correct = None
+        if "is_correct" in data:
+            is_correct = data["is_correct"]
+
+        return cls(data["chromosomes"], data["positions"].astype(np.int32), data["n_variants"], data["scores"], data["mapqs"], is_correct)
 
     def compare(self, other):
         pass
