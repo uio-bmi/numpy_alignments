@@ -40,8 +40,13 @@ def make_html_report_wrapper(args):
     truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
     ids = args.compare_alignments.split(",")
     compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
-    names = args.names.split(",")
-    names = {name: names[i] for i, name in enumerate(ids)}
+
+    if args.names is not None:
+        names = args.names.split(",")
+        names = {name: names[i] for i, name in enumerate(ids)}
+    else:
+        names = {name: name for name in ids}
+
     colors = args.colors.split(",")
     colors = {name: colors[i] for i, name in enumerate(ids)}
 
@@ -138,7 +143,7 @@ def run_argument_parser(args):
     cmd = subparsers.add_parser("make_report")
     cmd.add_argument("truth_alignments")
     cmd.add_argument("compare_alignments", help="Comma-separeted list of files to compare")
-    cmd.add_argument("names", help="Comma-separated pretty readable names (corresponding to compare_alignments)")
+    cmd.add_argument("-n", "--names", help="Comma-separated pretty readable names (corresponding to compare_alignments)")
     cmd.add_argument("colors", help="Comma-separated list of colors (must work with html)")
     cmd.add_argument("-f", "--report-id", required=False, default=None, help="Will be generated if not specified")
     cmd.set_defaults(func=make_html_report_wrapper)
