@@ -115,7 +115,9 @@ class Comparer:
                 tickfont=dict(
                     size=16
                 )
-            )
+            ),
+            xaxis_title="wrongly mapped reads / total reads",
+            yaxis_title="correctly mapped reads / total reads"
         )
         fig.update_layout(showlegend=False)
 
