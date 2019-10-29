@@ -116,8 +116,8 @@ class Comparer:
                     size=16
                 )
             ),
-            xaxis_title="wrongly mapped reads / total reads",
-            yaxis_title="correctly mapped reads / total reads"
+            xaxis_title="#wrong mapped / #mapped",
+            yaxis_title="#correctly mapped / total"
         )
         fig.update_layout(showlegend=False)
 
