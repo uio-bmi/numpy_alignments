@@ -22,7 +22,7 @@ class NumpyAlignments:
             "score": self.scores[item],
             "mapq": self.mapqs[item],
             "n_variants": self.n_variants[item],
-            "is_correct": self.is_correct[item] if self.is_correct is not None else None,
+            "is_correct": self.is_correct[item] if self.is_correct is not None and len(self.is_correct) > 0 else None,
         }
         return data
 
