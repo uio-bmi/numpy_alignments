@@ -88,7 +88,7 @@ class Comparer:
                 n_wrong_total += n_wrong
 
                 recalls[name].append(recalled_total / total)
-                precision[name].append((n_wrong_total + 1) / total)
+                precision[name].append((n_wrong_total + 1) / (n_wrong_total + recalled_total))
                 n_reads[name].append(np.log(1 + len(selection)))
 
 
