@@ -48,11 +48,11 @@ class Comparer:
         for name, alignments in self.compare_alignments.items():
             logging.info("Processing %s" % name)
             if self.type == "all":
-                total = len(self.truth_alignments.n_variants)
+                total = len(alignments.n_variants)
             elif self.type == "variants":
-                total = len(np.where(self.truth_alignments.n_variants > 0)[0])
+                total = len(np.where(alignments.n_variants > 0)[0])
             elif self.type == "nonvariants":
-                total = len(np.where(self.truth_alignments.n_variants == 0)[0])
+                total = len(np.where(alignments.n_variants == 0)[0])
             else:
                 raise Exception("Invalig type %s" % type)
 
@@ -70,9 +70,9 @@ class Comparer:
                 if self.type == "all":
                     selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit))[0]
                 elif self.type == "variants":
-                    selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (self.truth_alignments.n_variants > 0))[0]
+                    selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (alignments.n_variants > 0))[0]
                 elif self.type == "nonvariants":
-                    selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (self.truth_alignments.n_variants == 0))[0]
+                    selection = np.where((alignments.mapqs >= lower_limit) & (alignments.mapqs < upper_limit) & (alignments.n_variants == 0))[0]
 
                 if limit_comparison is not None:
                     selection = selection[0:limit_comparison]

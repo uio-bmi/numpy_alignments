@@ -26,14 +26,15 @@ class NumpyAlignments:
         }
         return data
 
-    def set_correctness(self, truth_alignments, allowed_mismatch=150):
-        if self.is_correct is not None and len(self.is_correct) == len(self.positions):
+    def set_correctness(self, truth_alignments, force=False, allowed_mismatch=150):
+        if not force and self.is_correct is not None and len(self.is_correct) == len(self.positions):
             logging.info("Not setting correctness. Is set before")
             return
 
         logging.info("Allowing %d base pairs mismatch" % allowed_mismatch)
         # Sets which alignments are correctly align by checking against another alignment set
         self.is_correct = np.zeros(len(self.chromosomes), dtype=np.uint8)
+        self.n_variants = truth_alignments.n_variants
         #chromosome_match = set(np.where(self.chromosomes == truth_alignments.chromosomes)[0])
         #position_match = set(np.where(np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch)[0])
         #match = np.array(list(chromosome_match.intersection(position_match)))
