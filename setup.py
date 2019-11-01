@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(name='numpy_alignments',
-      version='0.0.1',
+      version='0.0.2',
       description='Numpy Alignments',
-      url='http://github.com/ivargr/simple_read_mutator',
+      url='http://github.com/ivargr/numpy_alignments',
       author='Ivar Grytten',
       author_email='',
       license='MIT',
@@ -23,5 +23,5 @@ To update package:
 
 sudo python3 setup.py sdist
 sudo python3 setup.py bdist_wheel
-twine upload dist/simple_read_mutatot-X.tar.gz
+twine upload dist/numpy_alignments-X.tar.gz
 """
