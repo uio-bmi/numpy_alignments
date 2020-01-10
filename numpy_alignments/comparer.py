@@ -26,10 +26,27 @@ class Comparer:
             logging.info("Setting corectness for %s" % name)
             alignments.set_correctness(self.truth_alignments, self.allowed_mismatch)
 
+        if self.type == "all":
+            n_alignments = len(self.truth_alignments.positions)
+        elif self.type == "variants":
+            n_alignments = len(np.where(self.truth_alignments.n_variants > 0)[0])
+        elif self.type == "nonvariants":
+            n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
+
         rates = {}
         for name, alignments in self.compare_alignments.items():
             logging.info("Processing %s" % name)
-            rates[name] = np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
+            compare = self.compare_alignments
+            if self.type == "all":
+                selection = compare.positions[np.where(compare.is_correct == 1)[0]]
+            elif self.type == "variants":
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants > 0))[0]]
+            elif self.type == "nonvariants":
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants == 0))[0]]
+
+            n_correct = len(selection)
+
+            rates[name] = n_correct / n_alignments  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
 
         return rates
 
