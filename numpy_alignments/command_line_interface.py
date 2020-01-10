@@ -16,7 +16,8 @@ def set_correctness(args):
     truth = NumpyAlignments.from_file(args.truth_alignments + ".npz")
     alignments = NumpyAlignments.from_file(args.alignments + ".npz")
     logging.info("Setting correctness")
-    alignments.set_correctness(truth)
+    alignments.is_correct = None
+    alignments.set_correctness(truth, force=True)
     alignments.to_file(args.alignments)
     logging.info("Correctness was set and file written to same file again")
 
