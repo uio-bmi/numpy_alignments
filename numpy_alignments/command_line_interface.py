@@ -84,9 +84,10 @@ def get_correct_rates(args):
     logging.info("Reading alignments from file")
     truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
     compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
-
+    type = args.type #edit
+    
     logging.info("Comparing")
-    comparer = Comparer(truth_alignments, compare_alignments)
+    comparer = Comparer(truth_alignments, compare_alignments, type=type) #edit
     rates = comparer.get_correct_rates()
     for name, rate in rates.items():
         print(name, rate)
@@ -138,6 +139,7 @@ def run_argument_parser(args):
     compare = subparsers.add_parser("get_correct_rates")
     compare.add_argument("truth_alignments")
     compare.add_argument("compare_alignments", help="Comma-separated list of files to compare")
+    compare.add_argument("type") #edit
     compare.set_defaults(func=get_correct_rates)
 
     # Make ROC html report

@@ -36,7 +36,7 @@ class Comparer:
         rates = {}
         for name, alignments in self.compare_alignments.items():
             logging.info("Processing %s" % name)
-            compare = self.compare_alignments
+            compare = self.compare_alignments[name]
             if self.type == "all":
                 selection = compare.positions[np.where(compare.is_correct == 1)[0]]
             elif self.type == "variants":
