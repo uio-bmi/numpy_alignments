@@ -1,4 +1,5 @@
-# Numpy alignments 
+
+# Numpy alignments.
 Fast way of representing mapped read positions and comparing two sets of mapped reads using numpy.
 This package can make nice report pretty fast, comparing mapping accuracies of different sets of alignments. 
 
