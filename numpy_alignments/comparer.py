@@ -27,11 +27,11 @@ class Comparer:
             alignments.set_correctness(self.truth_alignments, self.allowed_mismatch)
 
         if self.type == "all":
-            n_alignments = len(np.where(self.truth_alignments.mapqs > min_mapq)[0])
+            n_alignments = len(self.truth_alignments.positions)
         elif self.type == "variants":
-            n_alignments = len(np.where((self.truth_alignments.n_variants > 0) & (self.truth_alignments.mapqs > min_mapq))[0])
+            n_alignments = len(np.where((self.truth_alignments.n_variants > 0))[0])
         elif self.type == "nonvariants":
-            n_alignments = len(np.where((self.truth_alignments.n_variants == 0 & (self.truth_alignments.mapqs > min_mapq)))[0])
+            n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
 
         rates = {}
         for name, alignments in self.compare_alignments.items():
