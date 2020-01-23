@@ -50,7 +50,7 @@ class Comparer:
             n_correct = len(selection)
             n_wrong = len(selection_wrong)
 
-            rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
+            rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct + 1)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
 
         return rates
 
