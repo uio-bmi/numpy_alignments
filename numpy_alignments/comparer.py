@@ -22,6 +22,7 @@ class Comparer:
         self.colors = colors
 
     def get_correct_rates(self, min_mapq=0):
+
         for name, alignments in self.compare_alignments.items():
             logging.info("Setting corectness for %s" % name)
             alignments.set_correctness(self.truth_alignments, self.allowed_mismatch)

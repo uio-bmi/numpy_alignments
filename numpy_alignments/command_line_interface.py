@@ -89,7 +89,7 @@ def get_correct_rates(args):
     
     logging.info("Comparing")
     comparer = Comparer(truth_alignments, compare_alignments, type=type) #edit
-    rates = comparer.get_correct_rates()
+    rates = comparer.get_correct_rates(min_mapq=min_mapq)
     for name, rate in rates.items():
         print(name, rate[0], rate[1])
 
