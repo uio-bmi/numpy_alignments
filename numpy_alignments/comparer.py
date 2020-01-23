@@ -39,14 +39,14 @@ class Comparer:
             logging.info("Processing %s" % name)
             compare = self.compare_alignments[name]
             if self.type == "all":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.mapqs >= min_mapq))[0]]
             elif self.type == "variants":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants > 0) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants > 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants > 0) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants > 0) & (compare.mapqs >= min_mapq))[0]]
             elif self.type == "nonvariants":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants == 0) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants == 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants == 0) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants == 0) & (compare.mapqs >= min_mapq))[0]]
 
             n_correct = len(selection)
             n_wrong = len(selection_wrong)
