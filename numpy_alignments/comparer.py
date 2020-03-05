@@ -144,12 +144,13 @@ class Comparer:
 
 
 
-        for name in self.compare_alignments.keys():
+        ticker_positions = ["top left", "top right", "bottom left", "bottom right", "top left", "top right", "bottom left", "bottom right"]
+        for i, name in self.compare_alignments.keys():
             sizes = np.array(n_reads[name])
             fig.add_trace(go.Scatter(x=precision[name], y=recalls[name],
                                      text=[m if m % 10 == 0 else None for m in self.mapq_intervals],
                                      mode='markers+lines+text',
-                                     textposition="top left",
+                                     textposition=ticker_positions[i],
                                      name=name,
                                      textfont=dict(
                                         size=16
