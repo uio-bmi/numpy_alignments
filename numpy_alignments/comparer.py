@@ -154,6 +154,7 @@ class Comparer:
         for i, name in enumerate(self.compare_alignments.keys()):
             ticker_text = [m if m % 10 == 0 else None for m in self.mapq_intervals]
 
+
             sizes = np.array(n_reads[name])
             fig.add_trace(go.Scatter(x=precision[name], y=recalls[name],
                                      text=ticker_text,
