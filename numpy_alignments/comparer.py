@@ -29,21 +29,11 @@ class Comparer:
             alignments.set_correctness(self.truth_alignments, allowed_mismatch=self.allowed_mismatch)
 
         if self.type == "all":
-<<<<<<< HEAD
-            n_alignments = len(self.truth_alignments.mapqs) #len(np.where(self.truth_alignments.mapqs > min_mapq)[0])
-        elif self.type == "variants":
-            n_alignments = len(np.where(self.truth_alignments.n_variants > 0)[0])
-        elif self.type == "nonvariants":
-            n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
-
-        logging.info("There are %d alignments of type %s" % (n_alignments, self.type))
-=======
             n_alignments = len(self.truth_alignments.positions)
         elif self.type == "variants":
             n_alignments = len(np.where((self.truth_alignments.n_variants > 0))[0])
         elif self.type == "nonvariants":
             n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
->>>>>>> dev-benchmarking
 
         rates = {}
         for name, alignments in self.compare_alignments.items():
@@ -62,15 +52,11 @@ class Comparer:
             n_correct = len(selection)
             n_wrong = len(selection_wrong)
 
-<<<<<<< HEAD
             try:
                 rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
             except ZeroDivisionError:
                 logging.error("Got zerodivision error. N correct: %d, n_alignments: %d. N wrong: %d" % (n_correct, n_alignments, n_wrong))
                 raise
-=======
-            rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct + 1)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
->>>>>>> dev-benchmarking
 
         return rates
 
