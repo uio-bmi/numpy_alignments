@@ -13,6 +13,7 @@ class Comparer:
         self.compare_alignments = compare_alignments
         self.type = type
         self.mapq_intervals = [60, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 46, 44, 42, 40, 37, 34, 30, 27, 25, 23, 20, 17, 14, 10, 6, 3, 2, 1, 0]
+        logging.info("Allowed mismatch in bp is %d" % allowed_mismatch)
         self.allowed_mismatch = allowed_mismatch
 
         default_colors = ["blue", "red", "green", "purple", "orange", "black"]
@@ -23,34 +24,40 @@ class Comparer:
 
     def get_correct_rates(self, min_mapq=0):
         for name, alignments in self.compare_alignments.items():
-            logging.info("Setting corectness for %s" % name)
-            alignments.set_correctness(self.truth_alignments, self.allowed_mismatch)
+            logging.info("Setting corectness for %s, allowed mismatch: %d" % (name, self.allowed_mismatch))
+            alignments.set_correctness(self.truth_alignments, allowed_mismatch=self.allowed_mismatch)
 
         if self.type == "all":
-            n_alignments = len(np.where(self.truth_alignments.mapqs > min_mapq)[0])
+            n_alignments = len(self.truth_alignments.mapqs) #len(np.where(self.truth_alignments.mapqs > min_mapq)[0])
         elif self.type == "variants":
-            n_alignments = len(np.where((self.truth_alignments.n_variants > 0) & (self.truth_alignments.mapqs > min_mapq))[0])
+            n_alignments = len(np.where(self.truth_alignments.n_variants > 0)[0])
         elif self.type == "nonvariants":
-            n_alignments = len(np.where((self.truth_alignments.n_variants == 0 & (self.truth_alignments.mapqs > min_mapq)))[0])
+            n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
+
+        logging.info("There are %d alignments of type %s" % (n_alignments, self.type))
 
         rates = {}
         for name, alignments in self.compare_alignments.items():
             logging.info("Processing %s" % name)
             compare = self.compare_alignments[name]
             if self.type == "all":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.mapqs >= min_mapq))[0]]
             elif self.type == "variants":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants > 0) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants > 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants > 0) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants > 0) & (compare.mapqs >= min_mapq))[0]]
             elif self.type == "nonvariants":
-                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants == 0) & (compare.mapqs > min_mapq))[0]]
-                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants == 0) & (compare.mapqs > min_mapq))[0]]
+                selection = compare.positions[np.where((compare.is_correct == 1) & (compare.n_variants == 0) & (compare.mapqs >= min_mapq))[0]]
+                selection_wrong = compare.positions[np.where((compare.is_correct == 0) & (compare.n_variants == 0) & (compare.mapqs >= min_mapq))[0]]
 
             n_correct = len(selection)
             n_wrong = len(selection_wrong)
 
-            rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
+            try:
+                rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
+            except ZeroDivisionError:
+                logging.error("Got zerodivision error. N correct: %d, n_alignments: %d. N wrong: %d" % (n_correct, n_alignments, n_wrong))
+                raise
 
         return rates
 

@@ -87,8 +87,8 @@ def get_correct_rates(args):
     compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
     type = args.type #edit
     
-    logging.info("Comparing")
-    comparer = Comparer(truth_alignments, compare_alignments, type=type) #edit
+    logging.info("Comparing..")
+    comparer = Comparer(truth_alignments, compare_alignments, type=type, allowed_mismatch=args.allowed_bp_mismatch) #edit
     rates = comparer.get_correct_rates()
     for name, rate in rates.items():
         print(name, rate[0], rate[1])
@@ -101,7 +101,7 @@ def compare_alignments(args):
 
     logging.info("Comparing")
     for type in ["all", "variants", "nonvariants"]:
-        comparer = Comparer(truth_alignments, compare_alignments, type=type, allowed_mismatcH=args.allowed_mismatch)
+        comparer = Comparer(truth_alignments, compare_alignments, type=type, allowed_mismatch=args.allowed_mismatch)
         save_to_file = None
         if args.save_to_file is not None:
             save_to_file = args.save_to_file + "_" + type + ".html"
@@ -142,6 +142,7 @@ def run_argument_parser(args):
     compare.add_argument("compare_alignments", help="Comma-separated list of files to compare")
     compare.add_argument("type")
     compare.add_argument("-m", "--min-mapq", type=int, default=0)
+    compare.add_argument("-t", "--allowed-bp-mismatch", type=int, default=150)
     compare.set_defaults(func=get_correct_rates)
 
     # Make ROC html report
