@@ -133,7 +133,10 @@ class NumpyAlignments:
                 chromosome = int(chromosome)
 
             position = int(l[2])
-            variants = int(l[7])
+            if len(l) > 7:
+                variants = int(l[7])
+            else:
+                variants = 0
 
             chromosomes[identifier] = chromosome
             positions[identifier] = position
