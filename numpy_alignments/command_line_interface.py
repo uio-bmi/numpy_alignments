@@ -73,8 +73,12 @@ def store_alignments(args):
         a = NumpyAlignments.from_sam(args.n_alignments)
     elif args.type == "truth":
         a = NumpyAlignments.from_truth(args.n_alignments)
+    elif args.type == "bed":
+        a = NumpyAlignments.from_bed(args.n_alignments)
+    elif args.type == "vgpos":
+        a = NumpyAlignments.from_vgpos(args.n_alignments)
     else:
-        logging.error("Invalig type %s" % args.type)
+        logging.error("Invalid type %s" % args.type)
         sys.exit()
 
     a.to_file(args.file_name)
@@ -93,6 +97,24 @@ def get_correct_rates(args):
     for name, rate in rates.items():
         print(name, rate[0], rate[1])
 
+def get_correct_rates_multi(args):
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+
+    n_correct = 0
+    with open(args.compare_alignments) as f:
+        reads_checked = set()
+        for line in f:
+            l = line.split()
+            name = l[3]
+            pos = int(l[1])
+
+            correct_pos = truth_alignments.positions[int(name)]
+            if abs(correct_pos-pos) < args.allowed_bp_mismatch and name not in reads_checked:
+                n_correct += 1
+                reads_checked.add(name)
+
+    logging.info("N correct: %d" % n_correct)
+    logging.info("Rate: %.3f" % (n_correct / len(truth_alignments.positions)))
 
 def compare_alignments(args):
     logging.info("Reading alignments from file")
@@ -109,6 +131,35 @@ def compare_alignments(args):
 
     #comparer.get_wrong_alignments_correct_by_other("two_step_approach", "vg_chr20")
     #comparer.get_wrong_alignments_correct_by_other("bwa_10m_tuned", "vg_10m")
+
+
+def rename(args):
+    assert args.posfile is not None or args.fq is not None, "Either --fq or --posfile must be specified"
+
+    if args.posfile is not None:
+        if args.posfile == "-":
+            f = sys.stdin
+        else:
+            f = open(args.posfile)
+
+        for i, line in enumerate(f):
+            l = line.split()
+            new_id = "%09d" % i
+            l[0] = new_id
+            print('\t'.join(l))
+    elif args.fq is not None:
+        if args.fq == "-":
+            f = sys.stdin
+        else:
+            f = open(args.fq)
+
+        for i, line in enumerate(f):
+            if i % 4 != 0:
+                print(line.strip())
+            else:
+                print("@%09d" % (i//4))
+
+    logging.info("Done")
 
 
 
@@ -145,6 +196,15 @@ def run_argument_parser(args):
     compare.add_argument("-t", "--allowed-bp-mismatch", type=int, default=150)
     compare.set_defaults(func=get_correct_rates)
 
+    #
+    compare = subparsers.add_parser("get_correct_rates_multi")
+    compare.add_argument("truth_alignments")
+    compare.add_argument("compare_alignments")
+    compare.add_argument("type")
+    compare.add_argument("-m", "--min-mapq", type=int, default=0)
+    compare.add_argument("-t", "--allowed-bp-mismatch", type=int, default=150)
+    compare.set_defaults(func=get_correct_rates_multi)
+
     # Make ROC html report
     cmd = subparsers.add_parser("make_report")
     cmd.add_argument("truth_alignments")
@@ -159,6 +219,13 @@ def run_argument_parser(args):
     cmd.add_argument("truth_alignments")
     cmd.add_argument("alignments")
     cmd.set_defaults(func=set_correctness)
+
+    # rename fq file to numeric increasing ids
+    cmd = subparsers.add_parser("rename")
+    cmd.add_argument("-q", "--fq", required=False)
+    cmd.add_argument("-p", "--posfile", required=False)
+    cmd.set_defaults(func=rename)
+
 
     if len(args) == 0:
         parser.print_help()

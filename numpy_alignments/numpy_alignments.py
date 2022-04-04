@@ -1,5 +1,4 @@
 import logging
-logging.basicConfig(level=logging.INFO)
 import numpy as np
 import sys
 from tqdm import tqdm
@@ -49,6 +48,7 @@ class NumpyAlignments:
 
     @classmethod
     def from_sam(cls, n_alignments):
+        show_error = True
         chromosomes = np.zeros(n_alignments, dtype=np.uint8)
         positions = np.zeros(n_alignments, dtype=np.int32)  # int and not uint so we can subtract positions later
         n_variants = np.zeros(n_alignments, dtype=np.uint8)
@@ -88,9 +88,11 @@ class NumpyAlignments:
                 #logging.error(line)
                 #continue
             except IndexError:
-                logging.error("Could not parsed line. Skipping")
-                logging.error(line)
-                continue
+                score = 0
+                if show_error:
+                    logging.error("Could not get score from line. Setting score to 0")
+                    logging.error(line)
+                show_error = False
 
             position = int(l[3])
 
@@ -104,6 +106,39 @@ class NumpyAlignments:
                 logging.error(line)
 
         logging.info("Done getting alignments")
+        return cls(chromosomes, positions, n_variants, scores, mapqs)
+
+
+    @classmethod
+    def from_bed(cls, n_alignments):
+        chromosomes = np.zeros(n_alignments, dtype=np.uint8)
+        positions = np.zeros(n_alignments, dtype=np.int32)
+        n_variants = np.zeros(n_alignments, dtype=np.uint8)
+        scores = np.zeros(n_alignments, dtype=np.uint16)
+        mapqs = np.zeros(n_alignments, dtype=np.uint8)
+
+        for line in tqdm(sys.stdin, total=n_alignments):
+
+            l = line.split()
+            try:
+                identifier = int(l[3])
+            except IndexError:
+                logging.error("Cannot parse line %s" % line)
+                raise
+                sys.exit()
+
+            chromosome = l[0]
+            if chromosome == "X":
+                chromosome = 23
+            elif chromosome == "Y":
+                chromosome = 24
+            else:
+                chromosome = int(chromosome)
+
+            position = int(l[1])
+            chromosomes[identifier] = chromosome
+            positions[identifier] = position
+
         return cls(chromosomes, positions, n_variants, scores, mapqs)
 
     @classmethod
@@ -141,6 +176,42 @@ class NumpyAlignments:
             chromosomes[identifier] = chromosome
             positions[identifier] = position
             n_variants[identifier] = variants
+
+        return cls(chromosomes, positions, n_variants, scores, mapqs)
+
+    @classmethod
+    def from_vgpos(cls, n_alignments):
+        chromosomes = np.zeros(n_alignments, dtype=np.uint8)
+        positions = np.zeros(n_alignments, dtype=np.int32)
+        n_variants = np.zeros(n_alignments, dtype=np.uint8)
+        scores = np.zeros(n_alignments, dtype=np.uint16)
+        mapqs = np.zeros(n_alignments, dtype=np.uint8)
+
+        for i, line in enumerate(tqdm(sys.stdin, total=n_alignments)):
+
+            l = line.split()
+            identifier = i
+            chromosome = l[2]
+            if chromosome == "X":
+                chromosome = 23
+            elif chromosome == "Y":
+                chromosome = 24
+            elif chromosome == "null":
+                chromosome = 0
+            else:
+                try:
+                    chromosome = int(chromosome)
+                except ValueError:
+                    logging.error("Could not parse chromosome %s. Setting to 0" % (chromosome))
+                    chromosome = 0
+
+            if l[3] == "null":
+                position = 0
+            else:
+                position = int(l[3])
+
+            chromosomes[identifier] = chromosome
+            positions[identifier] = position
 
         return cls(chromosomes, positions, n_variants, scores, mapqs)
 
