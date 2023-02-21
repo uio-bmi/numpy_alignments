@@ -32,6 +32,8 @@ class Comparer:
             n_alignments = len(np.where((self.truth_alignments.n_variants > 0))[0])
         elif self.type == "nonvariants":
             n_alignments = len(np.where(self.truth_alignments.n_variants == 0)[0])
+        else:
+            raise Exception("Invalid type (must be all, variants or nonvariants)")
 
         rates = {}
         for name, alignments in self.compare_alignments.items():
@@ -53,8 +55,10 @@ class Comparer:
             try:
                 rates[name] = (n_correct / n_alignments, (n_wrong / (n_wrong + n_correct)))  # np.sum(self.compare_alignments[name].is_correct) / len(self.truth_alignments.positions)
             except ZeroDivisionError:
+                logging.error("Name: %s, type: %s" % (name, self.type))
                 logging.error("Got zerodivision error. N correct: %d, n_alignments: %d. N wrong: %d" % (n_correct, n_alignments, n_wrong))
-                raise
+                rates[name] = (0, 0)
+                #raise
 
         return rates
 

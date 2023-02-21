@@ -2,6 +2,34 @@ import logging
 import numpy as np
 import sys
 from tqdm import tqdm
+from graph_read_simulator.simulation import MultiChromosomeCoordinateMap
+
+
+def encode_chromosome(chromosome):
+    if chromosome.startswith("chr"):
+        return encode_chromosome(chromosome.replace("chr", ""))
+
+    if chromosome == "X":
+        chromosome = 23
+    elif chromosome == "Y":
+        chromosome = 24
+    elif chromosome == "*":
+        # Read couldn't map, ignore
+        return -1
+    else:
+        chromosome = int(chromosome)
+
+    return chromosome
+
+
+def name_to_id(name):
+    if "/" in name:
+        name = name.split("/")
+        read_id = int(name[0])
+        pair_id = int(name[1])
+        return read_id * 2 + pair_id - 1
+    else:
+        return int(name)
 
 
 class NumpyAlignments:
@@ -55,6 +83,9 @@ class NumpyAlignments:
         scores = np.zeros(n_alignments, dtype=np.uint16)
         mapqs = np.zeros(n_alignments, dtype=np.uint8)
 
+        is_paired_end = False
+
+        i = 0
         for line in tqdm(sys.stdin, total=n_alignments):
             if line.startswith("@"):
                 continue
@@ -68,17 +99,26 @@ class NumpyAlignments:
             if int(l[1]) >= 256:
                 continue  # not primary mapping
 
-            identifier = int(l[0])
-            chromosome = l[2]
-            if chromosome == "X":
-                chromosome = 23
-            elif chromosome == "Y":
-                chromosome = 24
-            elif chromosome == "*":
-                # Read couldn't map, ignore
-                continue
+            if l[6] != "*":
+                if not is_paired_end:
+                    logging.info("Assuming sam is paired end. Will assign IDs automatically based on line number")
+                is_paired_end = True
+
+            if is_paired_end:
+                # hacky, should be fixed
+                if "/" in l[0]:
+                    identifier = name_to_id(l[0])
+                else:
+                    # this is the id after mapping without the /
+                    identifier = name_to_id(l[0])*2
+                    flag = int(l[1])
+                    if flag >= 128:  # second in pair
+                        identifier += 1
             else:
-                chromosome = int(chromosome)
+                identifier = name_to_id(l[0])
+
+            chromosome = encode_chromosome(l[2])
+
 
             try:
                 score = int(l[13].replace("AS:i:", ""))
@@ -105,6 +145,14 @@ class NumpyAlignments:
                 logging.error("Got indexerror when parsing line. Skipping")
                 logging.error(line)
 
+            if "NVARIANTS:" in line:
+                has_variant = 1
+                if "NVARIANTS:i:0" in line:
+                    has_variant = 0
+                n_variants[identifier] = has_variant
+
+            i += 1
+
         logging.info("Done getting alignments")
         return cls(chromosomes, positions, n_variants, scores, mapqs)
 
@@ -121,19 +169,13 @@ class NumpyAlignments:
 
             l = line.split()
             try:
-                identifier = int(l[3])
+                identifier = name_to_id(l[3])
             except IndexError:
                 logging.error("Cannot parse line %s" % line)
                 raise
                 sys.exit()
 
-            chromosome = l[0]
-            if chromosome == "X":
-                chromosome = 23
-            elif chromosome == "Y":
-                chromosome = 24
-            else:
-                chromosome = int(chromosome)
+            chromosome = encode_chromosome(l[0])
 
             position = int(l[1])
             chromosomes[identifier] = chromosome
@@ -153,19 +195,13 @@ class NumpyAlignments:
 
             l = line.split()
             try:
-                identifier = int(l[0])
+                identifier = name_to_id(l[0])
             except IndexError:
                 logging.error("Cannot parse line %s" % line)
                 raise
                 sys.exit()
 
-            chromosome = l[1]
-            if chromosome == "X":
-                chromosome = 23
-            elif chromosome == "Y":
-                chromosome = 24
-            else:
-                chromosome = int(chromosome)
+            chromosome = encode_chromosome(l[1])
 
             position = int(l[2])
             if len(l) > 7:
@@ -226,7 +262,7 @@ class NumpyAlignments:
         for line in tqdm(sys.stdin, total=n_alignments):
 
             l = line.split()
-            identifier = int(l[0])
+            identifier = name_to_id(l[0])
             chromosome = l[1]
             if chromosome == "X":
                 chromosome = 23
@@ -265,7 +301,11 @@ class NumpyAlignments:
 
     @classmethod
     def from_file(cls, file_name):
-        data = np.load(file_name)
+        try:
+            data = np.load(file_name)
+        except FileNotFoundError:
+            data = np.load(file_name + ".npz")
+
         is_correct = None
         if "is_correct" in data:
             is_correct = data["is_correct"]

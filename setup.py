@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='numpy_alignments',
-      version='0.0.2',
+      version='0.0.4',
       description='Numpy Alignments',
       url='http://github.com/ivargr/numpy_alignments',
       author='Ivar Grytten',
@@ -9,7 +9,7 @@ setup(name='numpy_alignments',
       license='MIT',
       packages=['numpy_alignments'],
       zip_safe=False,
-      install_requires=['numpy', 'tqdm', 'plotly'],
+      install_requires=['numpy', 'tqdm', 'plotly', 'graph_read_simulator'],
       classifiers=[
             'Programming Language :: Python :: 3'
       ],
@@ -21,7 +21,8 @@ setup(name='numpy_alignments',
 To update package:
 #Update version number manually in this file
 
-sudo python3 setup.py sdist
-sudo python3 setup.py bdist_wheel
-twine upload dist/numpy_alignments-X.tar.gz
+rm -rf dist
+python3 setup.py sdist
+python3 setup.py bdist_wheel
+twine upload dist/*.tar.gz
 """

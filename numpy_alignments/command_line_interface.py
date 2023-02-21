@@ -13,8 +13,8 @@ def main():
 
 def set_correctness(args):
     logging.info("Reading alignments")
-    truth = NumpyAlignments.from_file(args.truth_alignments + ".npz")
-    alignments = NumpyAlignments.from_file(args.alignments + ".npz")
+    truth = NumpyAlignments.from_file(args.truth_alignments)
+    alignments = NumpyAlignments.from_file(args.alignments)
     logging.info("Setting correctness")
     alignments.is_correct = None
     alignments.set_correctness(truth, force=True)
@@ -38,9 +38,9 @@ def make_html_report_wrapper(args):
     logging.info("Report will be in directory %s" % report_id)
 
     # Make
-    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
     ids = args.compare_alignments.split(",")
-    compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
+    compare_alignments = {c: NumpyAlignments.from_file(c) for c in args.compare_alignments.split(",")}
 
     if args.names is not None:
         names = args.names.split(",")
@@ -87,18 +87,32 @@ def store_alignments(args):
 def get_correct_rates(args):
     min_mapq = args.min_mapq
     logging.info("Reading alignments from file")
-    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
-    compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
+    compare_alignments = {c: NumpyAlignments.from_file(c) for c in args.compare_alignments.split(",")}
     type = args.type #edit
     
     logging.info("Comparing..")
     comparer = Comparer(truth_alignments, compare_alignments, type=type, allowed_mismatch=args.allowed_bp_mismatch) #edit
-    rates = comparer.get_correct_rates()
+    rates = comparer.get_correct_rates(args.min_mapq)
     for name, rate in rates.items():
-        print(name, rate[0], rate[1])
+        recall = rate[0]
+        one_minus_precision = rate[1]
+        precision = 1 - one_minus_precision
+
+        if args.report_type == "all":
+            print(name, rate[0], rate[1])
+        elif args.report_type == "recall":
+            print(recall)
+        elif args.report_type == "one_minus_precision":
+            print(one_minus_precision)
+        elif args.report_type == "f1_score":
+            f1 = 2 * precision * recall / (precision + recall)
+            print(f1)
+        else:
+            raise Exception("Invalid report type")
 
 def get_correct_rates_multi(args):
-    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
 
     n_correct = 0
     with open(args.compare_alignments) as f:
@@ -118,8 +132,8 @@ def get_correct_rates_multi(args):
 
 def compare_alignments(args):
     logging.info("Reading alignments from file")
-    truth_alignments = NumpyAlignments.from_file(args.truth_alignments + ".npz")
-    compare_alignments = {c: NumpyAlignments.from_file(c + ".npz") for c in args.compare_alignments.split(",")}
+    truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
+    compare_alignments = {c: NumpyAlignments.from_file(c) for c in args.compare_alignments.split(",")}
 
     logging.info("Comparing")
     for type in ["all", "variants", "nonvariants"]:
@@ -173,6 +187,7 @@ def run_argument_parser(args):
 
     # Store alignments
     store = subparsers.add_parser("store")
+    store.add_argument("-c", "--coordinate-map", required=False, help="If set, can use coordinate map to count variants (only supported for SAM-files)")
     store.add_argument("type", help="Type of alignments. Either sam, pos or truth.")
     store.add_argument("file_name", help="File name to store alignments to")
     store.add_argument("n_alignments", help="Must be >= number of alignments that is expected", type=int)
@@ -194,6 +209,7 @@ def run_argument_parser(args):
     compare.add_argument("type")
     compare.add_argument("-m", "--min-mapq", type=int, default=0)
     compare.add_argument("-t", "--allowed-bp-mismatch", type=int, default=150)
+    compare.add_argument("-r", "--report-type", default="all", help="all, recall, one_minus_precision, f1_score")
     compare.set_defaults(func=get_correct_rates)
 
     #
