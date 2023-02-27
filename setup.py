@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='numpy_alignments',
-      version='0.0.4',
+      version='0.0.5',
       description='Numpy Alignments',
       url='http://github.com/ivargr/numpy_alignments',
       author='Ivar Grytten',
