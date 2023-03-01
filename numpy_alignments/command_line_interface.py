@@ -1,7 +1,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 import argparse
-from .numpy_alignments import NumpyAlignments
+from .numpy_alignments import NumpyAlignments, NumpyAlignments2
 from .comparer import Comparer
 import sys
 from .htmlreport import make_report
@@ -77,6 +77,11 @@ def store_alignments(args):
         a = NumpyAlignments.from_bed(args.n_alignments)
     elif args.type == "vgpos":
         a = NumpyAlignments.from_vgpos(args.n_alignments)
+    elif args.type == "bam":
+        if args.n_variants is not None:
+            a = NumpyAlignments2.from_bam_and_nvariants_txt(args.input, args.n_variants)
+        else:
+            a = NumpyAlignments2.from_bam(args.input)
     else:
         logging.error("Invalid type %s" % args.type)
         sys.exit()
@@ -85,10 +90,17 @@ def store_alignments(args):
 
 
 def get_correct_rates(args):
-    min_mapq = args.min_mapq
     logging.info("Reading alignments from file")
-    truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
-    compare_alignments = {c: NumpyAlignments.from_file(c) for c in args.compare_alignments.split(",")}
+    try:
+        truth_alignments = NumpyAlignments.from_file(args.truth_alignments)
+    except KeyError:
+        truth_alignments = NumpyAlignments2.from_file(args.truth_alignments)
+
+    try:
+        compare_alignments = {c: NumpyAlignments.from_file(c) for c in args.compare_alignments.split(",")}
+    except KeyError:
+        compare_alignments = {c: NumpyAlignments2.from_file(c) for c in args.compare_alignments.split(",")}
+
     type = args.type #edit
     
     logging.info("Comparing..")
@@ -188,6 +200,8 @@ def run_argument_parser(args):
     # Store alignments
     store = subparsers.add_parser("store")
     store.add_argument("-c", "--coordinate-map", required=False, help="If set, can use coordinate map to count variants (only supported for SAM-files)")
+    store.add_argument("-i", "--input", required=False)
+    store.add_argument("-n", "--n_variants", required=False)
     store.add_argument("type", help="Type of alignments. Either sam, pos or truth.")
     store.add_argument("file_name", help="File name to store alignments to")
     store.add_argument("n_alignments", help="Must be >= number of alignments that is expected", type=int)

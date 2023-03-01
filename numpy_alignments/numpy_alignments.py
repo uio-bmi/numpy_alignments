@@ -2,7 +2,11 @@ import logging
 import numpy as np
 import sys
 from tqdm import tqdm
+import bionumpy as bnp
 from graph_read_simulator.simulation import MultiChromosomeCoordinateMap
+from shared_memory_wrapper import from_file, to_file
+from bionumpy.datatypes import BamEntry
+from bionumpy.bnpdataclass import bnpdataclass
 
 
 def encode_chromosome(chromosome):
@@ -316,9 +320,99 @@ class NumpyAlignments:
         pass
 
 
-if __name__ == "__main__":
-    alignments = NumpyAlignments.from_pos_file(sys.argv[1], int(sys.argv[2])) 
-    alignments.to_file(sys.argv[3])
+# Stores alignments sorted by "base name" and primary/seconday
+# enables comparisons of alignments from different sources since these will be
+# sorted in the same way (e.g. some sources will omitt paired-end information)
+
+@bnpdataclass
+class CustomBamEntry(BamEntry):
+    base_name: bnp.encodings.BaseEncoding
+    pair_id: int
 
 
+# Tmp class that will replace NumpyAlignments
+class NumpyAlignments2(NumpyAlignments):
+    def __init__(self, data, n_variants=None, is_preprocessed=False):
+        self.data = data
+        self.n_variants = n_variants
+        self.is_correct = None
 
+        self._is_preprocessed = is_preprocessed
+        if self._is_preprocessed:
+            return
+        self.preprocess()
+
+    @classmethod
+    def from_bam(cls, bam_file_name):
+        data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        return cls(data)
+
+    @classmethod
+    def from_bam_and_nvariants_txt(cls, bam_file_name, nvariants_file_name):
+        data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        n_variants = np.array([int(line.strip()) for line in open(nvariants_file_name)])
+        return cls(data, n_variants)
+
+    def to_file(self, file_name):
+        return to_file([self.data.shallow_tuple(), self.n_variants], file_name)
+
+    @classmethod
+    def from_file(cls, file_name):
+        data, n_variants = from_file(file_name)
+        return cls(CustomBamEntry(*data), n_variants, is_preprocessed=True)
+
+    def preprocess(self):
+
+        logging.info("Preprocessing %d alignments" % len(self.data))
+        # add base_name field with base_name (not including paired-end information if available)
+        base_names = [str(name).split("/")[0] for name in self.data.name]
+
+        # add pair-id (0 or 1)
+        binary_flags = [bin(flag)[2:] for flag in self.data.flag]
+        pair_ids = [0 if len(flag) < 8 or flag[-8] == 0 else 1 for flag in binary_flags]
+        #new_data = self.data.add_fields({"base_name": base_names, "pair_id": pair_ids},
+        #                                {"base_name": bnp.encodings.BaseEncoding, "pair_id": int})
+        fields = self.data.shallow_tuple()
+        new_data = CustomBamEntry(*self.data.shallow_tuple(), base_names, pair_ids)
+
+        # sort alignments on base name and pair-id
+        # after this sorting, these alignments can be compared to any bam with the same alignments
+        sorting = sorted(range(len(new_data)), key=lambda i: (str(new_data[i].base_name), new_data[i].pair_id))
+        sorted_data = new_data[sorting]
+        self.data = sorted_data
+        if self.n_variants is not None:
+            self.n_variants = self.n_variants[sorting]
+
+        self._is_preprocessed = True
+
+    # methods to implement NumpyAlignments infterface
+    @property
+    def chromosomes(self):
+        return self.data.chromosome
+
+    @property
+    def positions(self):
+        return self.data.position
+
+    @property
+    def mapqs(self):
+        return self.data.mapq
+
+    @property
+    def scores(self):
+        return NotImplemented
+
+    def set_correctness(self, truth_alignments, force=False, allowed_mismatch=150):
+        if not force and self.is_correct is not None and len(self.is_correct) == len(self.positions):
+            logging.info("Not setting correctness. Is set before")
+            return
+
+        logging.info("Allowing %d base pairs mismatch" % allowed_mismatch)
+        self.is_correct = np.zeros(len(self.chromosomes), dtype=np.uint8)
+        self.n_variants = truth_alignments.n_variants
+        match = np.where(np.all(self.chromosomes == truth_alignments.chromosomes, axis=1) & (
+                    np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch))[0]
+
+        logging.info("Number of matches: %d" % len(match))
+        self.is_correct[match] = 1
+        logging.info("N correct: %d" % len(match))
