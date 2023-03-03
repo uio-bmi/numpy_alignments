@@ -345,11 +345,17 @@ class NumpyAlignments2(NumpyAlignments):
     @classmethod
     def from_bam(cls, bam_file_name):
         data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        logging.info("%d alignments in bam" % len(data))
+        data = data[data.flag < 256]  # remove seconday alignments
+        logging.info("%d alignments after removing secondary alignments" % len(data))
         return cls(data)
 
     @classmethod
     def from_bam_and_nvariants_txt(cls, bam_file_name, nvariants_file_name):
         data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        logging.info("%d alignments in bam" % len(data))
+        data = data[data.flag < 256]  # remove seconday alignments
+        logging.info("%d alignments after removing secondary alignments" % len(data))
         n_variants = np.array([int(line.strip()) for line in open(nvariants_file_name)])
         return cls(data, n_variants)
 
@@ -403,6 +409,7 @@ class NumpyAlignments2(NumpyAlignments):
         return NotImplemented
 
     def set_correctness(self, truth_alignments, force=False, allowed_mismatch=150):
+        assert len(truth_alignments.data) == len(self.data), "Truth alignments does not have same number of alignments"
         if not force and self.is_correct is not None and len(self.is_correct) == len(self.positions):
             logging.info("Not setting correctness. Is set before")
             return
@@ -410,8 +417,10 @@ class NumpyAlignments2(NumpyAlignments):
         logging.info("Allowing %d base pairs mismatch" % allowed_mismatch)
         self.is_correct = np.zeros(len(self.chromosomes), dtype=np.uint8)
         self.n_variants = truth_alignments.n_variants
-        match = np.where(np.all(self.chromosomes == truth_alignments.chromosomes, axis=1) & (
-                    np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch))[0]
+
+        chromosome_match = np.all(self.chromosomes == truth_alignments.chromosomes, axis=1)
+        position_match = np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch
+        match = np.where(chromosome_match & position_match)[0]
 
         logging.info("Number of matches: %d" % len(match))
         self.is_correct[match] = 1
