@@ -418,7 +418,7 @@ class NumpyAlignments2(NumpyAlignments):
         self.is_correct = np.zeros(len(self.chromosomes), dtype=np.uint8)
         self.n_variants = truth_alignments.n_variants
 
-        chromosome_match = np.all(self.chromosomes == truth_alignments.chromosomes, axis=1)
+        chromosome_match = bnp.str_equal(self.chromosomes, truth_alignments.chromosomes)
         position_match = np.abs(self.positions - truth_alignments.positions) <= allowed_mismatch
         match = np.where(chromosome_match & position_match)[0]
 

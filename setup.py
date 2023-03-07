@@ -9,7 +9,7 @@ setup(name='numpy_alignments',
       license='MIT',
       packages=['numpy_alignments'],
       zip_safe=False,
-      install_requires=['numpy', 'tqdm', 'plotly', 'graph_read_simulator', 'bionumpy'],
+      install_requires=['numpy', 'tqdm', 'plotly', 'graph_read_simulator', 'bionumpy>0.2.19'],
       classifiers=[
             'Programming Language :: Python :: 3'
       ],
