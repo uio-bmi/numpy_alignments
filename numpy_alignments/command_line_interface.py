@@ -1,4 +1,5 @@
 import logging
+import bionumpy as bnp
 logging.basicConfig(level=logging.INFO)
 import argparse
 from .numpy_alignments import NumpyAlignments, NumpyAlignments2
@@ -9,6 +10,7 @@ from .htmlreport import make_report
 
 def main():
     run_argument_parser(sys.argv[1:])
+
 
 
 def set_correctness(args):
@@ -255,7 +257,6 @@ def run_argument_parser(args):
     cmd.add_argument("-q", "--fq", required=False)
     cmd.add_argument("-p", "--posfile", required=False)
     cmd.set_defaults(func=rename)
-
 
     if len(args) == 0:
         parser.print_help()

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='numpy_alignments',
-      version='0.0.6',
+      version='0.0.9',
       description='Numpy Alignments',
       url='http://github.com/ivargr/numpy_alignments',
       author='Ivar Grytten',
@@ -9,7 +9,7 @@ setup(name='numpy_alignments',
       license='MIT',
       packages=['numpy_alignments'],
       zip_safe=False,
-      install_requires=['numpy', 'tqdm', 'plotly', 'graph_read_simulator', 'bionumpy>0.2.19'],
+      install_requires=['numpy', 'tqdm', 'plotly', 'graph_read_simulator', 'bionumpy>=0.2.20'],
       classifiers=[
             'Programming Language :: Python :: 3'
       ],

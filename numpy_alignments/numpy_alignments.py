@@ -344,7 +344,7 @@ class NumpyAlignments2(NumpyAlignments):
 
     @classmethod
     def from_bam(cls, bam_file_name):
-        data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        data = bnp.open(bam_file_name).read()
         logging.info("%d alignments in bam" % len(data))
         data = data[data.flag < 256]  # remove seconday alignments
         logging.info("%d alignments after removing secondary alignments" % len(data))
@@ -352,7 +352,7 @@ class NumpyAlignments2(NumpyAlignments):
 
     @classmethod
     def from_bam_and_nvariants_txt(cls, bam_file_name, nvariants_file_name):
-        data = bnp.open(bam_file_name).read()[1:]  # bionumpy bug, duplicate first row
+        data = bnp.open(bam_file_name).read()
         logging.info("%d alignments in bam" % len(data))
         data = data[data.flag < 256]  # remove seconday alignments
         logging.info("%d alignments after removing secondary alignments" % len(data))
@@ -409,7 +409,7 @@ class NumpyAlignments2(NumpyAlignments):
         return NotImplemented
 
     def set_correctness(self, truth_alignments, force=False, allowed_mismatch=150):
-        assert len(truth_alignments.data) == len(self.data), "Truth alignments does not have same number of alignments"
+        assert len(truth_alignments.data) == len(self.data), "Truth alignments does not have same number of alignments (%d != %d)" % (len(truth_alignments.data), len(self.data))
         if not force and self.is_correct is not None and len(self.is_correct) == len(self.positions):
             logging.info("Not setting correctness. Is set before")
             return
